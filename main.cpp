@@ -13,6 +13,7 @@ static VideoBuffer gVideo[gNumCubes];
 //static struct MenuItem gItems[] = { {&IconSBOL, &LabelChroma}, {&IconPromoter, &LabelSandwich}, {&IconPeano, &LabelPeano}, {&IconBuddy, &LabelBuddy}, {&IconPromoter, NULL}, {NULL, NULL} };
 static struct MenuItem gItems[] = { { &IconSBOL, &LabelChroma }, { &IconPromoter, &LabelSandwich }, { &IconPromoter, NULL }, { NULL, NULL } };
 static struct MenuAssets gAssets = {&BgTile, &Footer, &LabelEmpty, {&Tip0, &Tip1, &Tip2, NULL}};
+static VideoBuffer vb;
 
 static AssetSlot MainSlot = AssetSlot::allocate()
     .bootstrap(BetterflowAssets);
@@ -36,14 +37,22 @@ static void begin() {
 }
 
 static void nextCube(VideoBuffer thisCube, MenuEvent ev){ 
-	if (ev.neighbor.neighborSide == 0){ //how do you convert between neighbors and cubes? @ev
+//	if (ev.neighbor.neighborSide == 0){ //how do you convert between neighbors and cubes? @ev
 		Neighborhood attached = thisCube.physicalNeighbors();
+		CubeID bottom = attached.cubeAt(BOTTOM);
+		bottom.detachVideoBuffer();
+		vb.attach(bottom);
+		vb.initMode(BG0);
+		vb.bg0.erase(BgTile);
+		//attached.initMode(BG0);
+		//attached.bg0.erase(BgTile);
 		
-		CubeID cube = gVideo[1].cube();
+/*		CubeID cube = gVideo[1].cube();
 		gVideo[1].initMode(BG0);
-		gVideo[1].bg0.erase(BgTile);
+		gVideo[1].bg0.erase(BgTile); */
 		LOG("it's happening again\n");
-	}
+		attached;
+//	}
 }
 
 void main()
@@ -86,15 +95,24 @@ void main()
                 case MENU_NEIGHBOR_ADD:
                     LOG("found cube %d on side %d of menu (neighbor's %d side)\n",
                          e.neighbor.neighbor, e.neighbor.masterSide, e.neighbor.neighborSide);
-					nextCube(gVideo[0], e); //aux method for neighbor attaching @ev
+					if (e.neighbor.masterSide == BOTTOM){
+						nextCube(gVideo[0], e); //change gVideo[0] to be more modular eventually @ev
+					}
                     break;
 
                 case MENU_NEIGHBOR_REMOVE:
                     LOG("lost cube %d on side %d of menu (neighbor's %d side)\n",
                          e.neighbor.neighbor, e.neighbor.masterSide, e.neighbor.neighborSide);
-					if (e.neighbor.neighborSide == 0){ //will move this to aux. method later @ev
-						gVideo[1].initMode(BG0);
-						gVideo[1].bg0.erase(StripeTile);
+					if (e.neighbor.masterSide == BOTTOM){ //will move this to aux. method later @ev
+						PCubeID bye = e.neighbor.neighbor;
+						CubeID srslybye = CubeID(bye);
+						srslybye.detachVideoBuffer();
+						LOG("The cubeID is %d\n", bye);
+						VideoBuffer vb1;
+						vb1.attach(srslybye);
+						vb1.initMode(BG0);
+						vb1.bg0.erase(StripeTile);
+						LOG("goodbye friends\n");
 					}
                     break;
 
